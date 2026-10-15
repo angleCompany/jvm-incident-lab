@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$ROOT"
+if [ -n "${JAVA_HOME:-}" ]; then
+  JAVA="$JAVA_HOME/bin/java"
+  JAVAC="$JAVA_HOME/bin/javac"
+else
+  JAVA=java
+  JAVAC=javac
+fi
+# Rebuild into a temporary directory, so simultaneous invocations never see partial classes.
+BUILD=$(mktemp -d "${TMPDIR:-/tmp}/jvmlab.XXXXXXXX")
+trap 'rm -rf "$BUILD"' EXIT HUP INT TERM
+"$JAVAC" --release 21 --add-modules jdk.httpserver,jdk.jfr -d "$BUILD" "$ROOT"/src/main/java/dev/jvmlab/*.java
+cp "$ROOT/src/main/resources/index.html" "$BUILD/index.html"
+"$JAVA" --add-modules jdk.httpserver,jdk.jfr -cp "$BUILD" dev.jvmlab.Main "$@"

@@ -1,0 +1,5 @@
+artifacts/
+.build/
+*.class
+.DS_Store
+__pycache__/
