@@ -11,11 +11,17 @@ Java 장애 패턴을 로컬에서 실행하는 실습실입니다. 현재 버�
 
 </details>
 
+[![실제 JVM 실행 결과로 구성한 30초 데모](docs/media/demo-poster.png)](docs/media/demo.mp4)
+
+[30초 데모 보기](docs/media/demo.mp4) — 실제 실행 결과를 사용한 무음 편집 영상이며, 실시간 녹화나 성능 벤치마크가 아닙니다.
+
 ## 실행
 
 JDK 21 이상이 필요합니다. Maven·Gradle·DB·API 키·외부 Java 라이브러리는 필요하지 않습니다.
 
 ```sh
+git clone https://github.com/angleCompany/jvm-incident-lab.git
+cd jvm-incident-lab
 ./jvmlab
 ```
 
@@ -63,3 +69,11 @@ python3 tests/verify.py
 반복 실행, 기대 증상, JFR 내용, HTTP 오류, 동시 실행 거절, 후속 실행 성공을 검사합니다.
 
 구조·Docker CLI·추가 옵션은 [영문 README](README.md), 장애 풀이 과정은 [시나리오 가이드](docs/thread-pool-starvation.md)를 참고하세요.
+
+## 첫 실행 피드백
+
+README만 보고 실패·수정 비교를 실행한 뒤, 실패 증거 하나와 무엇을 바꿨는지 설명해보세요. 막히면 5분 뒤 중단해도 됩니다.
+
+[첫 실행 피드백 남기기](https://github.com/angleCompany/jvm-incident-lab/issues/new?template=first-run-feedback.yml). 시작하지 못한 경우도 도움이 됩니다.
+
+[5인 사용자 검증 계획](docs/first-run-study.md)은 준비했으며, 외부 사용자 결과는 아직 수집하지 않았습니다.

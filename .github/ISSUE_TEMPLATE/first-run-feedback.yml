@@ -1,0 +1,69 @@
+name: First-run feedback / 첫 실행 피드백
+description: Help us understand your first five minutes with JVM Incident Lab.
+title: '[First run] '
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for trying the lab. Both successful and unsuccessful first runs are useful.
+        Please avoid private production dumps, credentials, and local paths containing personal information.
+        실행에 실패했어도 유용한 피드백입니다. 비공개 덤프·인증정보·개인 경로는 제외해주세요.
+  - type: input
+    id: environment
+    attributes:
+      label: Environment / 실행 환경
+      description: OS, architecture, and java -version. No need to include a username or home directory.
+      placeholder: macOS arm64, Corretto 21.0.6
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: How far did you get? / 어디까지 실행했나요?
+      options:
+        - Could not start / 시작하지 못함
+        - Started, but could not finish both runs / 시작했지만 비교 완료 못함
+        - Completed failure and fix / 실패·수정 비교 완료
+    validations:
+      required: true
+  - type: dropdown
+    id: assistance
+    attributes:
+      label: Did you need help beyond the README? / README 외 도움이 필요했나요?
+      options:
+        - No / 아니요
+        - Yes / 예
+    validations:
+      required: true
+  - type: input
+    id: duration
+    attributes:
+      label: Approximate time to first comparison / 첫 비교까지 걸린 시간
+      placeholder: 3 minutes, or stopped after 5 minutes
+  - type: textarea
+    id: friction
+    attributes:
+      label: Where did you get stuck? / 막힌 지점
+      description: Tell us the command or step. Include sanitized error text if useful.
+  - type: textarea
+    id: understanding
+    attributes:
+      label: What caused the failure, in your own words? / 실패 원인을 본인의 말로 설명해주세요
+      description: This checks how well the lab teaches, not your knowledge. 'Not sure' is useful too.
+    validations:
+      required: true
+  - type: dropdown
+    id: next
+    attributes:
+      label: Would you try another incident? / 다른 장애도 실행해보고 싶나요?
+      options:
+        - Yes / 예
+        - Maybe / 아직 모름
+        - No / 아니요
+    validations:
+      required: true
+  - type: textarea
+    id: use
+    attributes:
+      label: Where would you use this? / 활용할 곳 또는 원하는 다음 시나리오
+      placeholder: Team training, self-study, tool evaluation, or no clear use yet.

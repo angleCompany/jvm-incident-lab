@@ -3,3 +3,4 @@ artifacts/
 *.class
 .DS_Store
 __pycache__/
+.media-venv/

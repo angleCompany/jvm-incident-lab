@@ -6,7 +6,11 @@ A local, runnable lab for Java production failure patterns. Start with thread po
 
 **Status: v0.1 preview. One scenario implemented.** Not a production diagnostic agent or a performance benchmark.
 
-[한국어](README.ko.md) · [Scenario walkthrough](docs/thread-pool-starvation.md) · [Contributing](CONTRIBUTING.md)
+[한국어](README.ko.md) · [Scenario walkthrough](docs/thread-pool-starvation.md) · [First-run feedback](https://github.com/angleCompany/jvm-incident-lab/issues/new?template=first-run-feedback.yml) · [Contributing](CONTRIBUTING.md)
+
+[![30-second walkthrough: real JVM failure and fix results](docs/media/demo-poster.png)](docs/media/demo.mp4)
+
+**[Watch the 30-second demo](docs/media/demo.mp4)** — silent, edited walkthrough using actual JVM results; not a benchmark.
 
 <details>
 <summary>Actual dashboard after running failure → fix</summary>
@@ -20,6 +24,8 @@ A local, runnable lab for Java production failure patterns. Start with thread po
 Requires a **JDK 21 or newer** (`java`, `javac`, and `jfr`). No Maven, Gradle, database, API key, or third-party Java dependencies.
 
 ```sh
+git clone https://github.com/angleCompany/jvm-incident-lab.git
+cd jvm-incident-lab
 ./jvmlab
 ```
 
@@ -102,7 +108,15 @@ With JDK 21+ and Python 3.10+:
 python3 tests/verify.py
 ```
 
-Integration checks repeat the real comparison, validate counters and saved artifacts, parse JFR park events, exercise HTTP errors and cross-origin rejection, reject concurrent experiments, and run a successful fix afterward. CI is configured for JDK 21/25 on Linux/macOS; those remote jobs are not considered verified until they run.
+Integration checks repeat the real comparison, validate counters and saved artifacts, parse JFR park events, exercise HTTP errors and cross-origin rejection, reject concurrent experiments, and run a successful fix afterward. The initial implementation passed [CI on JDK 21/25 and Linux/macOS](https://github.com/angleCompany/jvm-incident-lab/actions/runs/38774522266). See [current CI](https://github.com/angleCompany/jvm-incident-lab/actions/workflows/verify.yml) for subsequent changes.
+
+## Help test the first five minutes
+
+Try the lab using only this README: run the failure and fix, find one piece of failure evidence, and explain what changed. If you get stuck, stop after five minutes. Both failures and successful runs help.
+
+[Submit first-run feedback](https://github.com/angleCompany/jvm-incident-lab/issues/new?template=first-run-feedback.yml). Do not include credentials or private production dumps.
+
+The [five-person study protocol](docs/first-run-study.md) defines how we will evaluate usability; no external-user results have been collected yet.
 
 ## Scope and direction
 
