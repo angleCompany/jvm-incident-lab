@@ -13,5 +13,5 @@ fi
 BUILD=$(mktemp -d "${TMPDIR:-/tmp}/jvmlab.XXXXXXXX")
 trap 'rm -rf "$BUILD"' EXIT HUP INT TERM
 "$JAVAC" --release 21 --add-modules jdk.httpserver,jdk.jfr -d "$BUILD" "$ROOT"/src/main/java/dev/jvmlab/*.java
-cp "$ROOT/src/main/resources/index.html" "$BUILD/index.html"
+cp "$ROOT"/src/main/resources/* "$BUILD/"
 "$JAVA" --add-modules jdk.httpserver,jdk.jfr -cp "$BUILD" dev.jvmlab.Main "$@"

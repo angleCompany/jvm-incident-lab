@@ -1,48 +1,79 @@
 <!doctype html>
 <html lang="en">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JVM Incident Lab · Thread pool starvation</title>
+<title data-en="JVM Incident Lab · Thread pool starvation" data-ko="JVM Incident Lab · 스레드 풀 고갈">JVM Incident Lab · Thread pool starvation</title>
 <style>
-:root{color-scheme:dark;--bg:#10171d;--panel:#19232c;--line:#30404d;--ink:#edf3f6;--muted:#a3b5c3;--green:#8ce4c5;--red:#ffac91}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}main{max-width:1150px;margin:auto;padding:36px 28px}header{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:22px;font-size:14px}.brand{font-weight:750;letter-spacing:1px}.tag{color:var(--green)}.intro{max-width:830px;margin:55px 0 36px}.eyebrow{font:12px monospace;color:var(--green);letter-spacing:2px}h1{font-size:clamp(34px,5vw,58px);line-height:1.12;letter-spacing:-2px;margin:16px 0 22px}p{color:var(--muted)}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 15px}button{border:0;border-radius:7px;background:var(--green);color:#10251f;padding:13px 20px;font:600 15px system-ui;cursor:pointer}button.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}button:disabled{opacity:.5;cursor:wait}button:focus-visible,a:focus-visible{outline:3px solid white;outline-offset:4px}.status{min-height:27px;color:var(--green);font-size:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{padding:24px;background:var(--panel);border:1px solid var(--line);border-radius:10px}h2{margin:0 0 12px;font-size:19px}.badge{font:12px monospace;color:var(--muted)}.flow{font:14px/2 monospace;margin:22px 0;color:var(--red)}.flow.fixed{color:var(--green)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:20px}.metric b{display:block;font-size:30px;font-variant-numeric:tabular-nums}.metric span{font-size:12px;color:var(--muted)}.verdict{margin:18px 0 0;font-size:14px;color:var(--muted)}section.evidence{margin-top:24px;border:1px solid var(--line);border-radius:10px;padding:24px}pre{white-space:pre;overflow:auto;max-height:410px;font:12px/1.7 ui-monospace,monospace;background:#0c1217;padding:20px;border-radius:6px}code{font:13px ui-monospace,monospace;color:var(--green)}.note{font-size:13px}.path{overflow-wrap:anywhere}footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:12px}details{margin:18px 0}summary{cursor:pointer}a{color:var(--green)}@media(max-width:700px){.grid{grid-template-columns:1fr}header{gap:20px}.intro{margin-top:35px}.card{padding:18px}}
-</style>
+:root{color-scheme:dark;--bg:#10171d;--panel:#19232c;--line:#30404d;--ink:#edf3f6;--muted:#a3b5c3;--green:#8ce4c5;--red:#ffac91}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,sans-serif}main{max-width:1150px;margin:auto;padding:36px 28px}header{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:22px;font-size:14px}.brand{font-weight:750;letter-spacing:1px}.tag{color:var(--green)}.intro{max-width:830px;margin:55px 0 36px}.eyebrow{font:12px monospace;color:var(--green);letter-spacing:2px}h1{font-size:clamp(34px,5vw,58px);line-height:1.12;letter-spacing:-2px;margin:16px 0 22px}p{color:var(--muted)}.actions{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 15px}button{border:0;border-radius:7px;background:var(--green);color:#10251f;padding:13px 20px;font:600 15px system-ui;cursor:pointer}button.secondary{background:transparent;border:1px solid var(--line);color:var(--ink)}button:disabled{opacity:.5;cursor:wait}button:focus-visible,a:focus-visible{outline:3px solid white;outline-offset:4px}.status{min-height:27px;color:var(--green);font-size:14px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{padding:24px;background:var(--panel);border:1px solid var(--line);border-radius:10px}h2{margin:0 0 12px;font-size:19px}.badge{font:12px monospace;color:var(--muted)}.flow{font:14px/2 monospace;margin:22px 0;color:var(--red)}.flow.fixed{color:var(--green)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:20px}.metric b{display:block;font-size:30px;font-variant-numeric:tabular-nums}.metric span{font-size:12px;color:var(--muted)}.verdict{margin:18px 0 0;font-size:14px;color:var(--muted)}section.evidence{margin-top:24px;border:1px solid var(--line);border-radius:10px;padding:24px}pre{white-space:pre;overflow:auto;max-height:410px;font:12px/1.7 ui-monospace,monospace;background:#0c1217;padding:20px;border-radius:6px}code{font:13px ui-monospace,monospace;color:var(--green)}.note{font-size:13px}.path{overflow-wrap:anywhere}footer{margin-top:40px;border-top:1px solid var(--line);padding-top:18px;color:var(--muted);font-size:12px}details{margin:18px 0}summary{cursor:pointer}a{color:var(--green)}@media(max-width:700px){.grid{grid-template-columns:1fr}header{gap:20px}.intro{margin-top:35px}.card{padding:18px}}
+.languages{display:flex;gap:6px}.languages button{padding:6px 10px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px}.languages button[aria-pressed="true"]{background:var(--green);color:#10251f;border-color:var(--green)}html[lang="ko"] h1{font-size:clamp(30px,4.3vw,50px);letter-spacing:-1.5px}html[lang="ko"] .flow{font-family:system-ui,sans-serif}</style>
 <main>
-<header><div class="brand">JVM INCIDENT LAB</div><div class="tag">LOCAL EXPERIMENT / 001</div></header>
-<div class="intro"><div class="eyebrow">THREAD POOL STARVATION</div><h1>Four workers.<br>Zero progress.</h1><p>Every parent waits for a child. Every child waits for a worker. Reproduce the failure, inspect real JVM evidence, then run the fix.</p>
-<div class="actions"><button id="compare">Run failure → fix</button><button class="secondary" id="starved">Failure only</button><button class="secondary" id="fixed">Fix only</button></div>
+<header><div class="brand">JVM INCIDENT LAB</div><div class="tag"><span data-en="LOCAL EXPERIMENT / 001" data-ko="로컬 실험 / 001">LOCAL EXPERIMENT / 001</span></div><nav class="languages" aria-label="Language / 언어"><button type="button" data-language="en" lang="en" aria-pressed="true">English</button><button type="button" data-language="ko" lang="ko" aria-pressed="false">한국어</button></nav></header>
+<div class="intro"><div class="eyebrow"><span data-en="THREAD POOL STARVATION" data-ko="스레드 풀 고갈">THREAD POOL STARVATION</span></div><h1><span data-en="Four workers." data-ko="워커는 네 개.">Four workers.</span><br><span data-en="Zero progress." data-ko="진행은 멈췄습니다.">Zero progress.</span></h1><p><span data-en="Every parent waits for a child. Every child waits for a worker. Reproduce the failure, inspect real JVM evidence, then run the fix." data-ko="부모 작업은 자식을 기다리고, 자식은 빈 워커를 기다립니다. 장애를 재현하고 실제 JVM 증거를 확인한 뒤 수정 사례를 실행해보세요.">Every parent waits for a child. Every child waits for a worker. Reproduce the failure, inspect real JVM evidence, then run the fix.</span></p>
+<div class="actions"><button id="compare"><span data-en="Run failure → fix" data-ko="실패 → 수정 비교">Run failure → fix</span></button><button class="secondary" id="starved"><span data-en="Failure only" data-ko="실패만 실행">Failure only</span></button><button class="secondary" id="fixed"><span data-en="Fix only" data-ko="수정만 실행">Fix only</span></button></div>
 <div class="status" id="status" role="status" aria-live="polite">Ready. Runs locally, with bounded execution and automatic cleanup.</div></div>
 <div class="grid">
-<article class="card" id="starved-card"><div class="badge">01 / SHARED EXECUTOR</div><h2>Dependency starvation</h2><div class="flow">4 parents → wait on Future.get()<br>↑ same pool · no free worker ↓<br>4 children → stuck in the queue</div><div class="metrics"><div class="metric"><b data-key="completed">—</b><span>parents completed / 4</span></div><div class="metric"><b data-key="childrenStarted">—</b><span>children started</span></div><div class="metric"><b data-key="queued">—</b><span>children queued</span></div></div><div class="verdict">Not run yet. Values appear after a real experiment.</div></article>
-<article class="card" id="fixed-card"><div class="badge">02 / SEPARATE EXECUTORS</div><h2>Room to make progress</h2><div class="flow fixed">4 parents → wait on Future.get()<br>↓ dedicated child pool ↓<br>4 children → execute → return</div><div class="metrics"><div class="metric"><b data-key="completed">—</b><span>parents completed / 4</span></div><div class="metric"><b data-key="childrenStarted">—</b><span>children started</span></div><div class="metric"><b data-key="queued">—</b><span>children queued</span></div></div><div class="verdict">Not run yet. Separate pools fix this dependency pattern.</div></article>
+<article class="card" id="starved-card"><div class="badge"><span data-en="01 / SHARED EXECUTOR" data-ko="01 / 동일한 실행 풀">01 / SHARED EXECUTOR</span></div><h2><span data-en="Dependency starvation" data-ko="작업 간 의존으로 인한 고갈">Dependency starvation</span></h2><div class="flow"><span data-en="4 parents → wait on Future.get()" data-ko="부모 4개 → Future.get()에서 대기">4 parents → wait on Future.get()</span><br><span data-en="↑ same pool · no free worker ↓" data-ko="↑ 같은 풀 · 빈 워커 없음 ↓">↑ same pool · no free worker ↓</span><br><span data-en="4 children → stuck in the queue" data-ko="자식 4개 → 대기 큐에서 정체">4 children → stuck in the queue</span></div><div class="metrics"><div class="metric"><b data-key="completed">—</b><span><span data-en="parents completed / 4" data-ko="완료한 부모 작업 / 4">parents completed / 4</span></span></div><div class="metric"><b data-key="childrenStarted">—</b><span><span data-en="children started" data-ko="실행을 시작한 자식">children started</span></span></div><div class="metric"><b data-key="queued">—</b><span><span data-en="children queued" data-ko="대기 중인 자식">children queued</span></span></div></div><div class="verdict"><span data-en="Not run yet. Values appear after a real experiment." data-ko="실행 전입니다. 실제 실험을 마치면 수치가 표시됩니다.">Not run yet. Values appear after a real experiment.</span></div></article>
+<article class="card" id="fixed-card"><div class="badge"><span data-en="02 / SEPARATE EXECUTORS" data-ko="02 / 실행 풀 분리">02 / SEPARATE EXECUTORS</span></div><h2><span data-en="Room to make progress" data-ko="자식이 실행될 여유 확보">Room to make progress</span></h2><div class="flow fixed"><span data-en="4 parents → wait on Future.get()" data-ko="부모 4개 → Future.get()에서 대기">4 parents → wait on Future.get()</span><br><span data-en="↓ dedicated child pool ↓" data-ko="↓ 자식 전용 실행 풀 ↓">↓ dedicated child pool ↓</span><br><span data-en="4 children → execute → return" data-ko="자식 4개 → 실행 → 결과 반환">4 children → execute → return</span></div><div class="metrics"><div class="metric"><b data-key="completed">—</b><span><span data-en="parents completed / 4" data-ko="완료한 부모 작업 / 4">parents completed / 4</span></span></div><div class="metric"><b data-key="childrenStarted">—</b><span><span data-en="children started" data-ko="실행을 시작한 자식">children started</span></span></div><div class="metric"><b data-key="queued">—</b><span><span data-en="children queued" data-ko="대기 중인 자식">children queued</span></span></div></div><div class="verdict"><span data-en="Not run yet. Separate pools fix this dependency pattern." data-ko="실행 전입니다. 풀 분리로 이 예제의 의존 문제를 해결합니다.">Not run yet. Separate pools fix this dependency pattern.</span></div></article>
 </div>
-<section class="evidence"><h2>Read the evidence</h2><p>Thread state alone does not prove starvation. Correlate waiting parents, queued children, and zero child starts.</p><details open><summary>Failure · worker thread snapshot</summary><pre id="starved-dump">Run the failure to capture actual JVM worker stacks.</pre><p id="starved-path" class="path note"></p></details><details><summary>Fix · worker thread snapshot</summary><pre id="fixed-dump">Run the fix to capture actual JVM worker stacks.</pre><p id="fixed-path" class="path note"></p></details><p class="note">The failure is observed for one second, then cancelled. Reports include JSON, a thread snapshot, and JFR. Timing includes evidence collection and is not a benchmark. No JVM monitor deadlock is required for this failure.</p></section>
-<section class="evidence"><h2>What changed?</h2><div class="grid"><div><div class="badge">BEFORE</div><pre>var child = parentPool.submit(work);
-return child.get();</pre></div><div><div class="badge">AFTER</div><pre>var child = childPool.submit(work);
-return child.get();</pre></div></div><p class="note">A separate pool resolves this example. In production, also consider asynchronous composition, explicit capacity limits, timeouts, and cancellation. Increasing the same pool size can merely postpone starvation.</p></section>
-<footer>JAVA 21+ · NO EXTERNAL LIBRARIES · NO CLOUD · JVM INCIDENT LAB</footer>
+<section class="evidence"><h2><span data-en="Read the evidence" data-ko="증거 확인">Read the evidence</span></h2><p><span data-en="Thread state alone does not prove starvation. Correlate waiting parents, queued children, and zero child starts." data-ko="스레드 상태만으로 고갈을 단정할 수 없습니다. 부모 작업의 대기, 자식의 대기 큐, 자식 실행 수 0을 함께 확인하세요.">Thread state alone does not prove starvation. Correlate waiting parents, queued children, and zero child starts.</span></p><details open><summary><span data-en="Failure · worker thread snapshot" data-ko="실패 · 워커 스레드 스냅샷">Failure · worker thread snapshot</span></summary><pre id="starved-dump"><span data-en="Run the failure to capture actual JVM worker stacks." data-ko="실패 사례를 실행하면 실제 JVM 워커 스택을 수집합니다.">Run the failure to capture actual JVM worker stacks.</span></pre><p id="starved-path" class="path note"></p></details><details><summary><span data-en="Fix · worker thread snapshot" data-ko="수정 · 워커 스레드 스냅샷">Fix · worker thread snapshot</span></summary><pre id="fixed-dump"><span data-en="Run the fix to capture actual JVM worker stacks." data-ko="수정 사례를 실행하면 실제 JVM 워커 스택을 수집합니다.">Run the fix to capture actual JVM worker stacks.</span></pre><p id="fixed-path" class="path note"></p></details><p class="note"><span data-en="The failure is observed for one second, then cancelled. Reports include JSON, a thread snapshot, and JFR. Timing includes evidence collection and is not a benchmark. No JVM monitor deadlock is required for this failure." data-ko="실패 사례는 1초 동안 관측한 뒤 취소합니다. JSON, 스레드 스냅샷, JFR을 저장합니다. 실행 시간에는 증거 수집 비용이 포함되므로 성능 벤치마크가 아닙니다. JVM 모니터 데드락 없이도 이 현상이 발생합니다.">The failure is observed for one second, then cancelled. Reports include JSON, a thread snapshot, and JFR. Timing includes evidence collection and is not a benchmark. No JVM monitor deadlock is required for this failure.</span></p></section>
+<section class="evidence"><h2><span data-en="What changed?" data-ko="무엇을 바꿨나요?">What changed?</span></h2><div class="grid"><div><div class="badge"><span data-en="BEFORE" data-ko="수정 전">BEFORE</span></div><pre>var child = parentPool.submit(work);
+return child.get();</pre></div><div><div class="badge"><span data-en="AFTER" data-ko="수정 후">AFTER</span></div><pre>var child = childPool.submit(work);
+return child.get();</pre></div></div><p class="note"><span data-en="A separate pool resolves this example. In production, also consider asynchronous composition, explicit capacity limits, timeouts, and cancellation. Increasing the same pool size can merely postpone starvation." data-ko="별도 풀은 이 예제의 문제를 해결합니다. 운영 환경에서는 비동기 조합, 명시적인 용량 제한, 타임아웃, 취소도 고려하세요. 같은 풀의 크기만 늘리면 고갈 시점이 늦춰질 뿐일 수 있습니다.">A separate pool resolves this example. In production, also consider asynchronous composition, explicit capacity limits, timeouts, and cancellation. Increasing the same pool size can merely postpone starvation.</span></p></section>
+<footer><span data-en="JAVA 21+ · NO EXTERNAL LIBRARIES · NO CLOUD · JVM INCIDENT LAB" data-ko="JAVA 21+ · 외부 라이브러리 없음 · 클라우드 연결 없음 · JVM INCIDENT LAB">JAVA 21+ · NO EXTERNAL LIBRARIES · NO CLOUD · JVM INCIDENT LAB</span></footer>
 </main>
+<script src="/language.js"></script>
 <script>
-const buttons = [...document.querySelectorAll('button')];
+const actionButtons = [...document.querySelectorAll('.actions button')];
 const status = document.getElementById('status');
+const results = {};
+let state = {kind:'ready'};
+const t = (en, ko) => window.labI18n.text(en, ko);
+const modeName = mode => mode === 'starved' ? t('failure', '실패') : t('fix', '수정');
+function render() {
+  for (const [mode, result] of Object.entries(results)) {
+    const card = document.getElementById(`${mode}-card`);
+    card.querySelectorAll('[data-key]').forEach(el => el.textContent = result[el.dataset.key]);
+    card.querySelector('.verdict').textContent = result.expected
+      ? t('✓ Expected behavior observed.', '✓ 예상한 동작을 확인했습니다.')
+      : t('Unexpected result. Inspect evidence and rerun.', '예상과 다른 결과입니다. 증거를 확인한 뒤 다시 실행하세요.');
+    document.getElementById(`${mode}-dump`).textContent = result.dump;
+    document.getElementById(`${mode}-path`).textContent = t('Saved report: ', '저장된 리포트: ') + result.report;
+  }
+  switch (state.kind) {
+    case 'running': status.textContent = t(`Running ${modeName(state.mode)} experiment… capturing JVM evidence.`, `${modeName(state.mode)} 사례 실행 중… JVM 증거를 수집합니다.`); break;
+    case 'complete': status.textContent = t('Complete. Evidence saved locally; worker threads cleaned up.', '완료했습니다. 증거를 로컬에 저장하고 워커 스레드를 정리했습니다.'); break;
+    case 'error': status.textContent = t('Error: ', '오류: ') + t(state.en, state.ko); break;
+    default: status.textContent = t('Ready. Runs locally, with bounded execution and automatic cleanup.', '준비됐습니다. 제한된 시간 동안 로컬에서 실행하고 자동으로 정리합니다.');
+  }
+}
+class LabError extends Error {
+  constructor(en, ko) { super(en); this.ko = ko; }
+}
 async function run(mode) {
-  status.textContent = `Running ${mode} experiment… capturing JVM evidence.`;
+  state = {kind:'running', mode}; render();
   const response = await fetch(`/api/run?mode=${mode}`, {method:'POST'});
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Experiment failed');
-  const card = document.getElementById(`${mode}-card`);
-  card.querySelectorAll('[data-key]').forEach(el => el.textContent = result[el.dataset.key]);
-  card.querySelector('.verdict').textContent = result.expected ? '✓ Expected behavior observed.' : 'Unexpected result. Inspect evidence and rerun.';
-  document.getElementById(`${mode}-dump`).textContent = result.dump;
-  document.getElementById(`${mode}-path`).textContent = `Saved report: ${result.report}`;
-  if (!result.expected) throw new Error(`${mode}: expected behavior was not observed`);
+  if (!response.ok) {
+    const errors = {
+      400: ['Invalid experiment request.', '실험 요청이 올바르지 않습니다.'],
+      403: ['Open the dashboard from a local address.', '로컬 주소로 대시보드를 열어주세요.'],
+      409: ['An experiment is already running.', '이미 실행 중인 실험이 있습니다.']
+    };
+    throw new LabError(...(errors[response.status] || ['Experiment failed; inspect server stderr.', '실험에 실패했습니다. 서버의 오류 출력을 확인하세요.']));
+  }
+  results[mode] = result;
+  render();
+  if (!result.expected) throw new LabError('Expected behavior was not observed.', '예상한 동작이 관측되지 않았습니다.');
 }
 async function execute(modes) {
-  buttons.forEach(button => button.disabled = true);
-  try { for (const mode of modes) await run(mode); status.textContent = 'Complete. Evidence saved locally; worker threads cleaned up.'; }
-  catch(error) {status.textContent = `Error: ${error.message}`;}
-  finally { buttons.forEach(button => button.disabled = false); }
+  actionButtons.forEach(button => button.disabled = true);
+  try { for (const mode of modes) await run(mode); state = {kind:'complete'}; }
+  catch(error) { state = {kind:'error', en:error.message, ko:error.ko || '서버에 연결할 수 없습니다. 서버 상태를 확인하세요.'}; }
+  finally { actionButtons.forEach(button => button.disabled = false); render(); }
 }
+window.addEventListener('lab-language-change', render);
 document.getElementById('compare').onclick = () => execute(['starved','fixed']);
 document.getElementById('starved').onclick = () => execute(['starved']);
 document.getElementById('fixed').onclick = () => execute(['fixed']);
+render();
 </script>
 </html>

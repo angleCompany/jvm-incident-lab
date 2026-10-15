@@ -37,6 +37,11 @@ public final class Main {
             if (resource == null) throw new IllegalStateException("Missing dashboard resource");
             page = resource.readAllBytes();
         }
+        byte[] languageScript;
+        try (var resource = Main.class.getResourceAsStream("/language.js")) {
+            if (resource == null) throw new IllegalStateException("Missing language resource");
+            languageScript = resource.readAllBytes();
+        }
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 16);
         ExecutorService requests = Executors.newFixedThreadPool(4);
         server.setExecutor(requests);
@@ -45,6 +50,8 @@ public final class Main {
             String path = exchange.getRequestURI().getPath();
             if (path.equals("/") && exchange.getRequestMethod().equals("GET")) {
                 send(exchange, 200, "text/html; charset=utf-8", page);
+            } else if (path.equals("/language.js") && exchange.getRequestMethod().equals("GET")) {
+                send(exchange, 200, "text/javascript; charset=utf-8", languageScript);
             } else if (path.equals("/api/health") && exchange.getRequestMethod().equals("GET")) {
                 json(exchange, 200, "{\"status\":\"ok\"}");
             } else if (path.equals("/api/run")) {

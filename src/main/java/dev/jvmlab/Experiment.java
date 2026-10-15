@@ -137,22 +137,30 @@ public final class Experiment {
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 
-    private static String report(Result r) {
+    private static String report(Result r) throws java.io.IOException {
         return """
-            <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-            <title>JVM Incident Lab — evidence report</title>
-            <style>body{max-width:960px;margin:48px auto;padding:0 24px;font:17px/1.6 system-ui;background:#101820;color:#e8eef5}h1,h2{color:#7be0c3}pre{overflow:auto;background:#182530;padding:24px;font-size:13px}code{color:#7be0c3}</style>
-            <h1>JVM Incident Lab</h1><p>Thread pool starvation · local experiment evidence</p>
-            """ + "<h2>" + html(r.mode()) + " · " + (r.expected() ? "Expected behavior observed" : "Unexpected result — investigate") + "</h2>" +
-            "<p>Parents completed: <b>" + r.completed() + "/" + r.parents() + "</b> · Children started: " + r.childrenStarted() +
-            " · Queued children: " + r.queued() + " · Active parents at snapshot: " + r.active() + "</p>" +
-            "<p>Starved: four parent tasks occupy every worker, enqueue children in the same pool, then wait on Future.get(). " +
-            "Fixed: children use a separate pool. This resolves this dependency pattern; it is not a universal pool-sizing remedy.</p>" +
-            "<p>The starved run is observed for one second, then interrupted and cleaned up. This is dependency starvation, " +
-            "not a monitor deadlock. Elapsed time includes recording and evidence overhead, and is not a benchmark.</p>" +
-            "<h2>Worker thread snapshot</h2><pre>" + html(r.dump()) + "</pre>" +
-            "<h2>Artifacts</h2><p>Alongside this report: <code>threads.txt</code>, <code>result.json</code>, <code>recording.jfr</code>.</p>" +
-            "<p>In the starved trace, inspect parent workers parked in FutureTask.get and Experiment. The queue count comes " +
-            "from the executor snapshot, not an inference from thread state alone. JFR ThreadPark events can be inspected in JMC.</p></html>";
+            <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+            <title data-en="JVM Incident Lab — evidence report" data-ko="JVM Incident Lab — 증거 리포트">JVM Incident Lab — evidence report</title>
+            <style>body{max-width:960px;margin:48px auto;padding:0 24px;font:17px/1.6 system-ui;background:#101820;color:#e8eef5}h1,h2{color:#7be0c3}pre{overflow:auto;background:#182530;padding:24px;font-size:13px}code{color:#7be0c3}.languages{display:flex;gap:8px}button{font:14px system-ui;border:1px solid #30404d;border-radius:6px;padding:8px 12px;background:transparent;color:#e8eef5;cursor:pointer}button[aria-pressed="true"]{background:#7be0c3;color:#101820}button:focus-visible{outline:3px solid white;outline-offset:3px}</style>
+            """ + HtmlI18n.controls() + "<h1>JVM Incident Lab</h1><p>" +
+            HtmlI18n.text("Thread pool starvation · local experiment evidence", "스레드 풀 고갈 · 로컬 실험 증거") + "</p><h2>" +
+            (r.mode().equals("starved") ? HtmlI18n.text("Failure", "실패") : HtmlI18n.text("Fix", "수정")) + " · " +
+            (r.expected() ? HtmlI18n.text("Expected behavior observed", "예상한 동작을 확인했습니다") :
+                HtmlI18n.text("Unexpected result — investigate", "예상과 다른 결과 — 확인이 필요합니다")) + "</h2><p>" +
+            HtmlI18n.text("Parents completed: ", "완료한 부모 작업: ") + "<b>" + r.completed() + "/" + r.parents() + "</b> · " +
+            HtmlI18n.text("Children started: ", "실행을 시작한 자식: ") + r.childrenStarted() + " · " +
+            HtmlI18n.text("Queued children: ", "대기 중인 자식: ") + r.queued() + " · " +
+            HtmlI18n.text("Active parents at snapshot: ", "관측 시점에 활성 상태인 부모: ") + r.active() + "</p><p>" +
+            HtmlI18n.text("Starved: four parent tasks occupy every worker, enqueue children in the same pool, then wait on Future.get(). Fixed: children use a separate pool. This resolves this dependency pattern; it is not a universal pool-sizing remedy.",
+                "실패 사례에서는 부모 작업 네 개가 모든 워커를 점유하고 같은 풀에 자식을 넣은 뒤 Future.get()으로 기다립니다. 수정 사례는 자식 전용 풀을 사용합니다. 이 예제의 의존 문제를 해결하는 방법이며, 모든 상황에 통하는 풀 크기 처방은 아닙니다.") + "</p><p>" +
+            HtmlI18n.text("The starved run is observed for one second, then interrupted and cleaned up. This is dependency starvation, not a monitor deadlock. Elapsed time includes recording and evidence overhead, and is not a benchmark.",
+                "실패 사례는 1초 동안 관측한 뒤 중단하고 정리합니다. 이 현상은 작업 간 의존으로 인한 고갈이며 JVM 모니터 데드락과 다릅니다. 실행 시간에는 기록과 증거 수집 비용이 포함되므로 성능 벤치마크가 아닙니다.") + "</p><h2>" +
+            HtmlI18n.text("Worker thread snapshot", "워커 스레드 스냅샷") + "</h2><pre>" + html(r.dump()) + "</pre><h2>" +
+            HtmlI18n.text("Artifacts", "결과 파일") + "</h2><p>" +
+            HtmlI18n.text("Alongside this report: ", "리포트와 같은 폴더에 저장됩니다: ") +
+            "<code>threads.txt</code>, <code>result.json</code>, <code>recording.jfr</code>.</p><p>" +
+            HtmlI18n.text("In the starved trace, inspect parent workers parked in FutureTask.get and Experiment. The queue count comes from the executor snapshot, not an inference from thread state alone. JFR ThreadPark events can be inspected in JMC.",
+                "실패 스택에서는 FutureTask.get과 Experiment에서 대기하는 부모 워커를 확인하세요. 대기 큐 수는 스레드 상태에서 추측한 값이 아니라 실행 풀에서 직접 측정한 값입니다. JFR의 ThreadPark 이벤트는 JMC에서 확인할 수 있습니다.") +
+            "</p>" + HtmlI18n.script() + "</html>";
     }
 }

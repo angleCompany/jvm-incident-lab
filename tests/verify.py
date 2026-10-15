@@ -26,7 +26,11 @@ def validate(result):
         assert result['completed'] == result['childrenStarted'] == 4
         assert result['queued'] == 0
     report = Path(result['report'])
-    assert report.is_file() and 'Expected behavior observed' in report.read_text()
+    assert report.is_file()
+    report_html = report.read_text()
+    assert 'Expected behavior observed' in report_html and '예상한 동작을 확인했습니다' in report_html
+    assert 'data-language="ko"' in report_html and 'data-language="en"' in report_html
+    assert 'labI18n' in report_html and '<script src=' not in report_html  # offline report embeds its language controller
     assert Path(result['recording']).stat().st_size > 1000
     assert json.loads((report.parent / 'result.json').read_text()) == result
     assert (report.parent / 'threads.txt').read_text() == result['dump']
@@ -78,7 +82,11 @@ try:
             if server.poll() is not None or time.monotonic() > deadline:
                 raise AssertionError('Server did not start')
             time.sleep(.1)
-    assert '<h1>Four workers.' in request('/')[1]
+    page = request('/')[1]
+    assert 'Four workers.' in page and '워커는 네 개.' in page
+    assert 'data-language="ko"' in page and 'data-language="en"' in page
+    assert request('/language.js')[0] == 200
+    assert 'lab-language-change' in request('/language.js')[1]
     assert request('/api/run?mode=starved')[0] == 405
     assert request('/api/run?mode=bad', 'POST')[0] == 400
     assert request('/api/run?mode=fixed', 'POST', 'https://example.com')[0] == 403

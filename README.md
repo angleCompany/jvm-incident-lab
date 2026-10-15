@@ -31,6 +31,8 @@ cd jvm-incident-lab
 
 Open **http://127.0.0.1:8787** and click **Run failure → fix**. The dashboard starts with empty measurements; all displayed results come from real JVM runs.
 
+Use **English / 한국어** in the dashboard or an offline report to switch language. The initial language follows your browser, with your selection saved when storage is available. `?lang=en` and `?lang=ko` provide direct links. Code, raw JVM stacks, and JSON field names stay unchanged when you switch.
+
 For a headless comparison:
 
 ```sh
