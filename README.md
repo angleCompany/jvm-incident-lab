@@ -1,8 +1,13 @@
-# JVM Incident Lab
+# JVM Incident Lab — Java Thread Pool Starvation Lab
 
-**Reproduce the failure. Read the evidence. Verify the fix.**
+**Reproduce Java thread pool starvation. Inspect thread dumps and Java Flight Recorder (JFR). Verify the fix.**
 
-A local, runnable lab for Java production failure patterns. Start with thread pool starvation: four workers, four queued children, and zero progress. Then run the same workload with a separate child executor.
+JVM Incident Lab is an open-source, hands-on **Java concurrency and JVM troubleshooting lab**. Run a bounded `ExecutorService` / `Future.get()` failure locally, inspect real worker stacks and JFR recordings, then compare a separate-executor fix.
+
+Use it to learn **thread dump analysis**, practice Java debugging, or teach a team why nested blocking tasks can stop a fixed-size thread pool. The dashboard and offline HTML reports support **English and 한국어**.
+
+[![Verify incident lab](https://github.com/angleCompany/jvm-incident-lab/actions/workflows/verify.yml/badge.svg)](https://github.com/angleCompany/jvm-incident-lab/actions/workflows/verify.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Status: v0.1 preview. One scenario implemented.** Not a production diagnostic agent or a performance benchmark.
 
@@ -19,7 +24,7 @@ A local, runnable lab for Java production failure patterns. Start with thread po
 
 </details>
 
-## Try it
+## Quick start: reproduce Java thread pool starvation
 
 Requires a **JDK 21 or newer** (`java`, `javac`, and `jfr`). No Maven, Gradle, database, API key, or third-party Java dependencies.
 
@@ -41,7 +46,7 @@ For a headless comparison:
 
 Windows: use WSL with JDK 21+. Native Windows launcher support is not implemented.
 
-## What you should observe
+## Thread pool starvation: failure vs. fix
 
 | Evidence | Shared pool: failure | Separate child pool: fix |
 |---|---:|---:|
@@ -56,7 +61,7 @@ A start barrier ensures all four parent workers are occupied before any child is
 
 This is **dependency starvation**, not a JVM monitor deadlock. A separate pool fixes this example; it does not make all nested blocking workloads safe.
 
-## Evidence you can inspect
+## Thread dumps and Java Flight Recorder (JFR) evidence
 
 Each run creates a unique directory under `artifacts/`:
 
@@ -112,6 +117,28 @@ python3 tests/verify.py
 
 Integration checks repeat the real comparison, validate counters and saved artifacts, parse JFR park events, exercise HTTP errors and cross-origin rejection, reject concurrent experiments, and run a successful fix afterward. The initial implementation passed [CI on JDK 21/25 and Linux/macOS](https://github.com/angleCompany/jvm-incident-lab/actions/runs/38774522266). See [current CI](https://github.com/angleCompany/jvm-incident-lab/actions/workflows/verify.yml) for subsequent changes.
 
+## Java concurrency troubleshooting FAQ
+
+### Why can Future.get() hang in a fixed thread pool?
+
+A parent task can submit child work to the same `ExecutorService` and then wait for that work with `Future.get()`. When every worker is occupied by a waiting parent, queued children have no worker to execute them. Incident 001 reproduces this thread pool starvation pattern with four workers and four parents.
+
+### Is thread pool starvation the same as a Java deadlock?
+
+This example has no JVM monitor-lock cycle. It is a capacity dependency: parent tasks hold worker capacity while waiting for child tasks that need the same capacity. A monitor deadlock detector alone does not explain that queue dependency. See the [step-by-step thread dump investigation](docs/thread-pool-starvation.md).
+
+### What does the JFR recording show?
+
+The lab records Java Flight Recorder `jdk.ThreadPark` events with stacks, along with monitor, sampling, and thread lifecycle events. Inspect the recording in JDK Mission Control (JMC), or use `jfr print`. Combine that evidence with measured executor counters and `threads.txt`.
+
+### Is this an alternative to Arthas, async-profiler, or JDK Mission Control?
+
+Those tools diagnose or inspect JVM behavior. This project supplies a reproducible Java failure and a specific before/after verification contract. You can inspect its evidence with existing tools; it does not attach to an arbitrary production JVM or automatically find its root cause.
+
+### Who is this lab for?
+
+Java developers learning concurrency, engineers practicing JVM incident investigation, and teams preparing a short troubleshooting exercise. The first scenario requires only JDK 21+; it works without Spring Boot, a database, or an AI service.
+
 ## Help test the first five minutes
 
 Try the lab using only this README: run the failure and fix, find one piece of failure evidence, and explain what changed. If you get stuck, stop after five minutes. Both failures and successful runs help.
@@ -131,6 +158,8 @@ Next candidates, subject to user feedback:
 - A scenario contribution contract and curated evidence corpus.
 
 The goal is an **executable incident knowledge base**: each scenario contains its trigger, symptoms, observable evidence, a specific repair, and a verification contract. Existing profilers and analyzers remain useful for exploring the evidence. This project does not replace them or automatically diagnose an arbitrary production outage.
+
+If this runnable Java debugging lab is useful, **star the repository** to bookmark it. Bug reports, first-run feedback, and reproducible scenario contributions help shape what comes next.
 
 ## License
 

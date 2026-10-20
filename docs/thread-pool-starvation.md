@@ -1,6 +1,8 @@
-# Incident 001: thread pool starvation
+# Java Thread Pool Starvation: Reproduce, Read the Thread Dump, Verify the Fix
 
-## Question
+Incident 001 is a runnable Java concurrency exercise using `ExecutorService`, `Future.get()`, real thread dumps, and Java Flight Recorder (JFR). [Run the lab](../README.md#quick-start-reproduce-java-thread-pool-starvation).
+
+## Why does Future.get() stop making progress?
 
 A service stops making progress, but there is no synchronized-lock cycle. Why?
 

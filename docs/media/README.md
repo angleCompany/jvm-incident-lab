@@ -23,3 +23,13 @@ python3 -m venv .media-venv
 ```
 
 Install ffmpeg through your platform's package manager. The script uses Arial on macOS or DejaVu Sans on Linux, with a Pillow default-font fallback. Underlying thread/JFR/report evidence remains in ignored `artifacts/` directories.
+
+## Repository social preview
+
+`social-preview.png` is a 1280×640 PNG for GitHub link sharing. It illustrates the same controlled failure/fix counters. Rebuild with the optional Pillow environment above:
+
+```sh
+.media-venv/bin/python scripts/build_social_preview.py
+```
+
+Set it separately in repository Settings → Social preview; committing this asset alone does not change GitHub's preview.
